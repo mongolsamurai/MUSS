@@ -655,14 +655,14 @@ class Event(Object):
     """
     A class from which to derive scripted events.
     """
-    def __init__(self, name, owner=None, lock=None, disruptive=False):
+    def __init__(self, name, owner=None, disruptive=False):
         super(Event, self).__init__(name, None, owner)
         with locks.authority_of(locks.SYSTEM):
             self.type = 'event'
         self.disruptive = disruptive
         self.name = name
 
-    def trigger(self, source, player, **kwargs):
+    def trigger(self):
         if self.disruptive:
             raise CancelExecutionException()
 
