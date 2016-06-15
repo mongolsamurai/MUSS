@@ -395,7 +395,7 @@ class Object(object):
         Run any event registered on the object asociated with the given name.
         """
         try:
-            self._events[event_name].trigger(self, player, kwargs)
+            self._events[event_name].trigger(self, player, **kwargs)
         except KeyError:
             pass
 
