@@ -52,6 +52,7 @@ class Object(object):
             self.locks = Locks()
             self.lock_attr("locks", set_lock=locks.Fail())
             self._location = None
+            self._events = dict()
 
         with locks.authority_of(self.owner):
             self.description = "You see nothing special."
@@ -389,6 +390,21 @@ class Object(object):
                                         .format(self.name, self.owner))
         delete(self)
 
+    def run_event(self, event_name, player, **kwargs):
+        """
+        Run any event registered on the object asociated with the given name.
+        """
+        try:
+            self._events[event_name](self, player, kwargs)
+        except KeyError:
+            pass
+
+    def register_event(self, event_name, event):
+        """
+        Assign a function to an object, to be called whenever the associated event name 'ocurrs'.
+        """
+        self._events[event_name] = event
+
 
 class Locks(object):
     """
@@ -633,6 +649,34 @@ class Exit(Object):
             player.send(self.go_message.format(**params))
         except AttributeError:
             pass
+
+
+class Event(Object):
+    """
+    A class from which to derive scripted events.
+    """
+    def __init__(self, name, owner=None, lock=None, disruptive=False):
+        super(Event, self).__init__(name, None, owner)
+        with locks.authority_of(locks.SYSTEM):
+            self.type = 'event'
+        self.disruptive = disruptive
+        self.name = name
+
+    def trigger(self, source, player, **kwargs):
+        if self.disruptive:
+            raise CancelExecutionException()
+
+
+class CancelExecutionException(Exception):
+    """
+    An exception used in scripted events to disrupt the triggering command.
+    """
+    def __init__(self, string=""):
+        if string:
+            self.msg = string
+
+    def __str__(self):
+        return self.msg
 
 
 def backup():

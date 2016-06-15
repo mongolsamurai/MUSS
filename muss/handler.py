@@ -199,6 +199,11 @@ class NormalMode(Mode):
             else:
                 player.send("Usage: " + usages[0])
             player.send("(Try \"help {}\" for more help.)".format(name))
+        except db.CancelExecutionException as e:
+            pass
+            # A mistake has not actually occured here.
+            #   The command issued by the user was disrupted by a scripted
+            #   event on the target object.
 
 
 def prompt(player, prompt):
