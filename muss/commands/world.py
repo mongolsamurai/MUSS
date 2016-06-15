@@ -225,6 +225,8 @@ class Take(parser.Command):
         if origin is player:
             raise utils.UserError("You already have {}.".format(item))
 
+        item.run_event("get", player)
+
         try:
             item.location = player
         except equipment.EquipmentError:
