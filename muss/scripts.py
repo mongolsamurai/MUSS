@@ -33,7 +33,8 @@ class SelfDestruct(db.Event):
     def trigger(self, source, player, **kwargs):
         try:
            player.send(self.send_string.format(obj=source.name))
-           source.emit(self.emit_string.format(obj=source.name, player=player.name), exceptions=[player])
+           source.emit(self.emit_string.format(obj=source.name, player=player.name),
+                   exceptions=[player])
         except AttributeError:
             source.emit(self.emit_string.format(obj=source.name, player=player.name))
         with locks.authority_of(locks.SYSTEM):
@@ -102,4 +103,5 @@ class RemoveAttribute(db.Event):
 
 disintegrate = SelfDestruct('disintegrate', 'The {obj} disintegrates!')
 explode = SelfDestruct('explode', 'The {obj} explodes violently!')
-absorb = SelfDestruct('absorb', 'The {obj} glows briefly, and absorbs into {player}', send='The {obj} glows bright, and absorbs into you!')
+absorb = SelfDestruct('absorb', 'The {obj} glows briefly, and absorbs into {player}',
+        send='The {obj} glows bright, and absorbs into you!')
