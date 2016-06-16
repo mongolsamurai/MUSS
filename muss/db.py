@@ -664,7 +664,7 @@ class Event(Object):
 
     def trigger(self):
         if self.disruptive:
-            raise CancelExecutionException()
+            raise CancelExecutionException("Triggered a disruptive event")
 
 
 class CancelExecutionException(Exception):

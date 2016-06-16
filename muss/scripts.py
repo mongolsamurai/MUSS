@@ -38,7 +38,6 @@ class SelfDestruct(db.Event):
             source.emit(self.emit_string.format(obj=source.name, player=player.name))
         with locks.authority_of(locks.SYSTEM):
             source.destroy()
-            self.destroy()
         super(SelfDestruct, self).trigger()
 
 class ApplyAttribute(db.Event):
