@@ -25,11 +25,10 @@ class SelfDestruct(db.Event):
     Class for scripted events which destroy the object to which they are registered
     """
     def __init__(self, name, emit, send=None, owner=None):
+        super(SelfDestruct, self).__init__(name, owner=owner, disruptive=True)
         with locks.authority_of(locks.SYSTEM):
             self.emit_string = emit
             self.send_string = send
-            self.disruptive = disruptive
-        super(SelfDestruct, self).__init__(name, owner=owner, disruptive=True)
 
     def trigger(self, source, player, **kwargs):
         try:
