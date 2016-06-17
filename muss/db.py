@@ -61,6 +61,7 @@ class Object(object):
             self.locks.insert = locks.Is(self)
             self.locks.remove = locks.Is(self)
             self.locks.destroy = locks.Owns(self)
+            self.locks.events = locks.Owns(self)
             if location:
                 self.location = location
 
@@ -403,6 +404,9 @@ class Object(object):
         """
         Assign a function to an object, to be called whenever the associated event name 'ocurrs'.
         """
+        if not self.locks.events():
+            raise locks.LockFailedError("You cannot create events for {}."
+                    .format(self.name))
         self._events[event_name] = event
 
 
@@ -655,12 +659,13 @@ class Event(Object):
     """
     A class from which to derive scripted events.
     """
-    def __init__(self, name, owner=None, disruptive=False):
+    def __init__(self, name, owner=None, disruptive=False, exempt=None):
         super(Event, self).__init__(name, None, owner)
         with locks.authority_of(locks.SYSTEM):
             self.type = 'event'
         self.disruptive = disruptive
         self.name = name
+        self.locks.exempt = locks.Is(exempt)
 
     def trigger(self):
         if self.disruptive:
