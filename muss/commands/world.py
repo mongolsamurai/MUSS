@@ -22,6 +22,7 @@ class Equip(parser.Command):
                 item.equip()
             except AttributeError:
                 raise utils.UserError("That is not equipment!")
+            item.run_event("equip", player)
             player.send("You equip {}.".format(item.name))
             player.emit("{} equips {}.".format(player.name, item.name),
                         exceptions=[player])
@@ -48,6 +49,7 @@ class Unequip(parser.Command):
             item.unequip()
         except AttributeError:
             raise utils.UserError("That is not equipment!")
+        item.run_event("unequip", player)
         player.send("You unequip {}.".format(item.name))
         player.emit("{} unequips {}.".format(player.name, item.name),
                     exceptions=[player])
@@ -73,6 +75,8 @@ class Give(parser.Command):
 
         if destination is player:
             raise utils.UserError("You already have {}.".format(item))
+
+        item.run_event("give", player, destination=destination)
 
         item.location = destination
 
@@ -117,6 +121,7 @@ class Drop(parser.Command):
             raise parser.NotFoundError("", 0, "", None)
 
         was_equipped = hasattr(item, "equipped") and x.equipped
+        item.run_event("drop", player)
         item.location = player.location
         if was_equipped:
             player.send("You unequip and drop {}.".format(item.name))
@@ -139,7 +144,9 @@ class Go(parser.Command):
 
     def execute(self, player, args):
         try:
-            args["exit"].go(player)
+            exit = args["exit"]
+            exit.run_event("go", player)
+            exit.go(player)
         except AttributeError:
             # it has no go() so it isn't an exit
             player.send("You can't go through {}.".format(args["exit"]))
@@ -173,6 +180,7 @@ class Look(parser.Command):
     def execute(self, player, args):
         try:
             obj = args["obj"]
+            obj.run_event("look", player)
         except KeyError:
             # If invoked without argument, look at our surroundings instead
             obj = player.location
@@ -225,10 +233,10 @@ class Take(parser.Command):
         if origin is player:
             raise utils.UserError("You already have {}.".format(item))
 
-        item.run_event("get", player)
 
         try:
             item.location = player
+            item.run_event("get", player)
         except equipment.EquipmentError:
             raise equipment.EquipmentError("You can't, it's equipped.")
 
