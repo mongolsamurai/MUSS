@@ -667,9 +667,40 @@ class Event(Object):
         self.name = name
         self.locks.exempt = locks.Is(exempt)
 
-    def trigger(self):
+    def trigger(self, source, player, **kwargs):
         if self.disruptive:
             raise CancelExecutionException("Triggered a disruptive event")
+
+
+class VisibleEvent(Event):
+    """
+    An event which includes notices to be displayed when triggered
+    """
+    def __init__(self, name, emit=None, send=None, owner=None,
+            disruptive=False, exempt=None):
+        if not (emit or send):
+            raise utils.UserError("One of emit message or send message is required.")
+        super(VisibleEvent, self).__init__(name, owner=owner,
+                disruptive=disruptive, exempt=exempt)
+        self.emit_string = emit
+        self.send_string = send
+
+    def trigger(self, source, player, **kwargs):
+        # the logic here goes something like this:
+        #   If there's a message for the triggering player, send it,
+        #   then emit the world-visible message to every else, if there is one.
+        #   If there's not a player message, just emit the world message to everyone.
+        try:
+           player.send(self.send_string.format(obj=source.name))
+        except AttributeError:
+            source.emit(self.emit_string.format(obj=source.name, player=player.name))
+        else:
+            try:
+                source.emit(self.emit_string.format(obj=source.name,
+                    player=player.name), exceptions=[player])
+            except AttributeError:
+                pass
+        super(VisibleEvent, self).trigger(source, player)
 
 
 class CancelExecutionException(Exception):
