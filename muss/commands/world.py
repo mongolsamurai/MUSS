@@ -19,10 +19,11 @@ class Equip(parser.Command):
         item = args.get("item")
         if item:
             try:
+                item.is_equipment
+                item.run_event("equip", player)
                 item.equip()
             except AttributeError:
                 raise utils.UserError("That is not equipment!")
-            item.run_event("equip", player)
             player.send("You equip {}.".format(item.name))
             player.emit("{} equips {}.".format(player.name, item.name),
                         exceptions=[player])
@@ -46,10 +47,11 @@ class Unequip(parser.Command):
     def execute(self, player, args):
         item = args["item"]
         try:
+            item.is_equipment
+            item.run_event("unequip", player)
             item.unequip()
         except AttributeError:
             raise utils.UserError("That is not equipment!")
-        item.run_event("unequip", player)
         player.send("You unequip {}.".format(item.name))
         player.emit("{} unequips {}.".format(player.name, item.name),
                     exceptions=[player])
