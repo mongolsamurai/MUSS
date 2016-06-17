@@ -10,6 +10,7 @@ class Equipment(db.Object):
         super(Equipment, self).__init__(name, location, owner)
         self.equipped = False
         self.lock_attr("equipped", set_lock=locks.Has(self))
+        self.is_equipment = True
 
     def equip(self):
         if self.equipped:
