@@ -4,8 +4,7 @@ class CreateObject(db.VisibleEvent):
     """
     Class for scripted events which cause the creation of a new object
     """
-    def __init__(self, name, emit=None, send=None, owner=None,
-            disruptive=False, exempt=None):
+    def __init__(self, name, emit=None, send=None, disruptive=False, exempt=None):
         super(CreateObject, self).__init__(name, emit=emit,
                 send=send, owner=owner, disruptive=disruptive, exempt=exempt)
 
@@ -17,7 +16,7 @@ class SelfDestruct(db.VisibleEvent):
     """
     Class for scripted events which destroy the object to which they are registered
     """
-    def __init__(self, name, emit=None, send=None, owner=None, exempt=None):
+    def __init__(self, name, emit=None, send=None, exempt=None):
         super(SelfDestruct, self).__init__(name, emit=emit,
                 send=send, owner=owner, disruptive=True, exempt=exempt)
 
@@ -30,8 +29,7 @@ class ApplyAttribute(db.VisibleEvent):
     """
     Class for scripted events which apply a custom attribute to an object
     """
-    def __init__(self, name, emit=None, send=None, owner=None,
-            disruptive=False, exempt=None):
+    def __init__(self, name, emit=None, send=None, disruptive=False, exempt=None):
         super(ApplyAttribute, self).__init__(name, emit=emit,
                 send=send, owner=owner, disruptive=disruptive, exempt=exempt)
 
@@ -43,8 +41,7 @@ class ChangeAttribute(db.VisibleEvent):
     """
     Class for scripted events which modify a custom attribute on an object
     """
-    def __init__(self, name, emit=None, send=None, owner=None,
-            disruptive=False, exempt=None):
+    def __init__(self, name, emit=None, send=None, disruptive=False, exempt=None):
         super(ChangeAttribute, self).__init__(name, emit=emit,
                 send=send, owner=owner, disruptive=disruptive, exempt=exempt)
 
@@ -56,8 +53,7 @@ class RemoveAttribute(db.VisibleEvent):
     """
     Class for scripted events which remove a custom attribute from an object
     """
-    def __init__(self, name, emit=None, send=None, owner=None,
-            disruptive=False, exempt=None):
+    def __init__(self, name, emit=None, send=None, disruptive=False, exempt=None):
         super(RemoveAttribute, self).__init__(name, emit=emit,
                 send=send, owner=owner, disruptive=disruptive, exempt=exempt)
 
