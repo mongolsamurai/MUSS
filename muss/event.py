@@ -2,8 +2,7 @@ class Event(Object):
     """
     A class from which to derive scripted events.
     """
-    def __init__(self, name, owner=None, disruptive=False, exempt=None):
-        super(Event, self).__init__(name, None, owner)
+    def __init__(self, name, disruptive=False, exempt=None):
         with locks.authority_of(locks.SYSTEM):
             self.type = 'event'
         self.disruptive = disruptive
@@ -19,8 +18,7 @@ class VisibleEvent(Event):
     """
     An event which includes notices to be displayed when triggered
     """
-    def __init__(self, name, emit=None, send=None, owner=None,
-            disruptive=False, exempt=None):
+    def __init__(self, name, emit=None, send=None, disruptive=False, exempt=None):
         if not (emit or send):
             raise utils.UserError("One of emit message or send message is required.")
         super(VisibleEvent, self).__init__(name, owner=owner,
