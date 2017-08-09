@@ -6,9 +6,11 @@ class CreateObject(event.VisibleEvent):
     Strings passed as emit and send parameters are formatted with the created
       object's name substituted for '{created_obj}', in addition to the usual.
     """
-    def __init__(self, name, obj_name, obj_type, emit=None, send=None, disruptive=False, exempt=None):
-        emit = emit.format(created_obj=obj_name)
-        send = send.format(created_obj=obj_name)
+    def __init__(self, name, obj_name, obj_type, emit=None, send=None, disruptive=False, exempt=None, owner=None):
+        if emit:
+            emit = emit.format(created_obj=obj_name)
+        if send:
+            send = send.format(created_obj=obj_name)
         super(CreateObject, self).__init__(name, emit=emit,
                 send=send, owner=owner, disruptive=disruptive, exempt=exempt)
         self.obj_name = obj_name
@@ -27,34 +29,34 @@ class CreateObject(event.VisibleEvent):
 #            raise utils.UserError("{} doesn't have this class: "
 #                                  "{}".format(mod_name, class_name))
 #        self.obj_type = object_class
-         self.obj_type = obj_type
+        self.obj_type = obj_type
 
-    def trigger(self, source, player, **kwargs):
-        db.store(self.obj_type(self.obj_name, owner=player, location=player.location))
+    def trigger(self, event_source, trigger_source, **kwargs):
+        db.store(self.obj_type(self.obj_name, owner=trigger_source, location=trigger_source.location))
         super(CreateObject, self).trigger()
 
 class SelfDestruct(event.VisibleEvent):
     """
     Class for scripted events which destroy the object to which they are registered
     """
-    def __init__(self, name, emit=None, send=None, exempt=None):
+    def __init__(self, name, emit=None, send=None, exempt=None, owner=None):
         super(SelfDestruct, self).__init__(name, emit=emit,
                 send=send, owner=owner, disruptive=True, exempt=exempt)
 
-    def trigger(self, source, player, **kwargs):
+    def trigger(self, event_source, trigger_source, **kwargs):
         with locks.authority_of(locks.SYSTEM):
-            source.destroy()
-        super(SelfDestruct, self).trigger(source, player)
+            event_source.destroy()
+        super(SelfDestruct, self).trigger(event_source, trigger_source)
 
 class ApplyAttribute(event.VisibleEvent):
     """
     Class for scripted events which apply a custom attribute to an object
     """
-    def __init__(self, name, emit=None, send=None, disruptive=False, exempt=None):
+    def __init__(self, name, emit=None, send=None, disruptive=False, exempt=None, owner=None):
         super(ApplyAttribute, self).__init__(name, emit=emit,
                 send=send, owner=owner, disruptive=disruptive, exempt=exempt)
 
-    def trigger(self, source, player, **kwargs):
+    def trigger(self, event_source, trigger_source, **kwargs):
         # TODO: Implement appropriate changes to world database
         super(ApplyAttribute, self).trigger()
 
@@ -62,11 +64,11 @@ class ChangeAttribute(event.VisibleEvent):
     """
     Class for scripted events which modify a custom attribute on an object
     """
-    def __init__(self, name, emit=None, send=None, disruptive=False, exempt=None):
+    def __init__(self, name, emit=None, send=None, disruptive=False, exempt=None, owner=None):
         super(ChangeAttribute, self).__init__(name, emit=emit,
                 send=send, owner=owner, disruptive=disruptive, exempt=exempt)
 
-    def trigger(self, source, player, **kwargs):
+    def trigger(self, event_source, trigger_source, **kwargs):
         # TODO: Implement appropriate changes to world database
         super(ChangeAttribute, self).trigger()
 
@@ -74,11 +76,11 @@ class RemoveAttribute(event.VisibleEvent):
     """
     Class for scripted events which remove a custom attribute from an object
     """
-    def __init__(self, name, emit=None, send=None, disruptive=False, exempt=None):
+    def __init__(self, name, emit=None, send=None, disruptive=False, exempt=None, owner=None):
         super(RemoveAttribute, self).__init__(name, emit=emit,
                 send=send, owner=owner, disruptive=disruptive, exempt=exempt)
 
-    def trigger(self, source, player, **kwargs):
+    def trigger(self, event_source, trigger_source, **kwargs):
         # TODO: Implement appropriate changes to world database
         super(RemoveAttribute, self).trigger()
 
@@ -86,23 +88,23 @@ class Relocate(event.VisibleEvent):
     """
     Class for scripted events that cause a player to be moved to a new world location
     """
-    def __init__(self, name, destination, emit=None, send=None, disruptive=False, exempt=None):
-        super(RemoveAttribute, self).__init__(name, emit=emit,
+    def __init__(self, name, destination, emit=None, send=None, disruptive=False, exempt=None, owner=None):
+        super(Relocate, self).__init__(name, emit=emit,
                 send=send, owner=owner, disruptive=disruptive, exempt=exempt)
         self.destination = db.get(destination)
 
-    def trigger(self, source, player, **kwargs):
-        with locks.authority_of(locks.SYSTEM):
-            player.location = self.target
+    def trigger(self, event_source, trigger_source, **kwargs):
+        with locks.authority_of(event_source):
+            trigger_source.location = self.target
         super(RemoveAttribute, self).trigger()
 
 _muss_script_lib = {
     'disintegrate' : SelfDestruct('disintegrate', emit='The {obj} disintegrates!'),
     'explode' : SelfDestruct('explode', emit='The {obj} explodes violently!'),
     'absorb' : SelfDestruct('absorb',
-        emit='The {obj} glows briefly, and absorbs into {player}',
+        emit='The {obj} glows briefly, and absorbs into {trigger_source}',
         send='The {obj} glows bright, and absorbs into you!'),
     'disrupt' : event.VisibleEvent('disrupt', send='The {obj} is cursed!', disruptive=True),
-    'teleport_to_start' : Relocate('teleport to start', 0, send='A searing white flash and a thunderclap surround you, momentarily dazzling yoru senses. When you recover, you are somewhere else!', emit='With a blinding flash and a clap of thunder, {player} vanishes!', disruptive=True),
-    'create_samophlange' : CreateObject('create samoplhange', 'samophlange', db.Object, emit='The {obj} rattles, and a {created_obj} falls out!')
+    'teleport_to_start' : Relocate('teleport to start', 0, send='A searing white flash and a thunderclap surround you, momentarily dazzling yoru senses. When you recover, you are somewhere else!', emit='With a blinding flash and a clap of thunder, {trigger_source} vanishes!', disruptive=True),
+    'create_samophlange' : CreateObject('create samoplhange', 'samophlange', db.Object, emit='A {created_obj} falls out with an audible `"clunk"!')
     }

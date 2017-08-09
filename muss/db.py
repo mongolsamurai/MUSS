@@ -391,14 +391,15 @@ class Object(object):
                                         .format(self.name, self.owner))
         delete(self)
 
-    def run_event(self, event_name, player, **kwargs):
+    def run_event(self, event_names, trigger_source, **kwargs):
         """
         Run any event registered on the object asociated with the given name.
         """
-        try:
-            self._events[event_name].trigger(self, player, **kwargs)
-        except KeyError:
-            pass
+        for name in event_names:
+            try:
+                self._events[name].trigger(self, trigger_source, **kwargs)
+            except KeyError:
+                pass
 
     def register_event(self, event_name, event):
         """

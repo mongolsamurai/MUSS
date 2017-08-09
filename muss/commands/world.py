@@ -2,7 +2,7 @@
 
 import pyparsing as pyp
 import importlib
-from muss import db, parser, equipment, utils
+from muss import db, parser, equipment, utils, event
 
 
 class Equip(parser.Command):
@@ -20,14 +20,29 @@ class Equip(parser.Command):
         if item:
             try:
                 item.is_equipment
-                item.run_event("equip", player)
-                item.equip()
             except AttributeError:
                 raise utils.UserError("That is not equipment!")
+
+            try:
+                player.run_event(["equip", "wear", "don"], player)
+            except event.CancelExecutionException:
+                raise utils.UserError("You can't equip anything!".format(item.name))
+
+            try:
+                item.run_event(["equip", "wear", "don"], player)
+            except event.CancelExecutionException:
+                raise utils.UserError("You can't equip {}!".format(item.name))
+
+            item.equip()
             player.send("You equip {}.".format(item.name))
             player.emit("{} equips {}.".format(player.name, item.name),
                         exceptions=[player])
         else:
+            try:
+                player.run_event(["wearing", "equipped", "gear"])
+            except event.CancelExecutionException:
+                raise utils.UserError("You can't tell what you're wearing!".format(item.name))
+
             equipment = player.equipment_string()
             if equipment:
                 player.send(equipment)
@@ -48,10 +63,20 @@ class Unequip(parser.Command):
         item = args["item"]
         try:
             item.is_equipment
-            item.run_event("unequip", player)
-            item.unequip()
         except AttributeError:
             raise utils.UserError("That is not equipment!")
+
+        try:
+            player.run_event(["unequip", "remove", "doff"], player)
+        except event.CancelExecutionException:
+            raise utils.UserError("You can't unequip anything!".format(item.name))
+
+        try:
+            item.run_event(["unequip", "remove", "doff"], player)
+        except event.CancelExecutionException:
+            raise utils.UserError("You can't unequip {}!".format(item.name))
+
+        item.unequip()
         player.send("You unequip {}.".format(item.name))
         player.emit("{} unequips {}.".format(player.name, item.name),
                     exceptions=[player])
@@ -78,7 +103,29 @@ class Give(parser.Command):
         if destination is player:
             raise utils.UserError("You already have {}.".format(item))
 
-        item.run_event("give", player, destination=destination)
+        try:
+            player.run_event(["give", "put"], player, destination=destination)
+        except event.CancelExecutionException:
+            if destination.type == "player":
+                raise utils.UserError("You can't give anything away!")
+            else:
+                raise utils.UserError("You can't put anything down!")
+
+        try:
+            item.run_event(["give", "put"], player, destination=destination)
+        except event.CancelExecutionException:
+            if destination.type == "player":
+                raise utils.UserError("You can't give {} away!".format(item.name))
+            else:
+                raise utils.UserError("You can't put {} down!".format(item.name))
+
+        try:
+            destination.run_event(["give", "put"], player, destination=destination)
+        except event.CancelExecutionException:
+            if destination.type == "player":
+                raise utils.UserError("You can't give anything to {}!".format(destination.name))
+            else:
+                raise utils.UserError("You can't put anything in {}!".format())
 
         item.location = destination
 
@@ -122,8 +169,17 @@ class Drop(parser.Command):
         else:
             raise parser.NotFoundError("", 0, "", None)
 
+        try:
+            player.run_event(["drop"], player)
+        except event.CancelExecutionException:
+            raise utils.UserError("You can't drop anything!".format(item.name))
+
+        try:
+            item.run_event(["drop"], player)
+        except event.CancelExecutionException:
+            raise utils.UserError("{} can't be dropped!".format(item.name))
+
         was_equipped = hasattr(item, "equipped") and x.equipped
-        item.run_event("drop", player)
         item.location = player.location
         if was_equipped:
             player.send("You unequip and drop {}.".format(item.name))
@@ -147,11 +203,21 @@ class Go(parser.Command):
     def execute(self, player, args):
         try:
             exit = args["exit"]
-            exit.run_event("go", player)
-            exit.go(player)
         except AttributeError:
             # it has no go() so it isn't an exit
             player.send("You can't go through {}.".format(args["exit"]))
+
+        try:
+            player.run_event(["go"], player)
+        except event.CancelExecutionException:
+            raise utils.UserError("You can't leave!")
+
+        try:
+            exit.run_event(["go"], player)
+        except event.CancelExecutionException:
+            raise utils.UserError("You can't go {}!".format(exit.name))
+
+        exit.go(player)
 
 
 class Inventory(parser.Command):
@@ -159,6 +225,10 @@ class Inventory(parser.Command):
     help_text = "Shows you what you're carrying."
 
     def execute(self, player, args):
+        try:
+            player.run_event(["inventory"], player)
+        except event.CancelExecutionException:
+            raise utils.UserError("You can't tell what you're carrying!")
         inventory = player.contents_string()
         if inventory:
             player.send(inventory)
@@ -182,10 +252,19 @@ class Look(parser.Command):
     def execute(self, player, args):
         try:
             obj = args["obj"]
-            obj.run_event("look", player)
         except KeyError:
             # If invoked without argument, look at our surroundings instead
             obj = player.location
+
+        try:
+            player.run_event(["look"], player)
+        except event.CancelExecutionException:
+            raise utils.UserError("You can't see anything!")
+
+        try:
+            obj.run_event(["look"], player)
+        except event.CancelExecutionException:
+            raise utils.UserError("You can't see {}!".format(obj.name))
 
         try:
             player.send(obj.position_string())
@@ -235,10 +314,18 @@ class Take(parser.Command):
         if origin is player:
             raise utils.UserError("You already have {}.".format(item))
 
+        try:
+            player.run_event(["take", "get"], player)
+        except event.CancelExecutionException:
+            raise utils.UserError("You can't take anything!")
+
+        try:
+            item.run_event(["take", "get"], player)
+        except event.CancelExecutionException:
+            raise utils.UserError("You can't take {}!".format(item.name))
 
         try:
             item.location = player
-            item.run_event("get", player)
         except equipment.EquipmentError:
             raise equipment.EquipmentError("You can't, it's equipped.")
 
