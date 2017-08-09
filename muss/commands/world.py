@@ -264,7 +264,10 @@ class Look(parser.Command):
         try:
             obj.run_event(["look"], player)
         except event.CancelExecutionException:
-            raise utils.UserError("You can't see {}!".format(obj.name))
+            if obj == player.location:
+                raise utils.UserError("You can't see anything around you!")
+            else:
+                raise utils.UserError("You can't see {}!".format(obj.name))
 
         try:
             player.send(obj.position_string())
