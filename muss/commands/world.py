@@ -324,6 +324,12 @@ class Take(parser.Command):
         except event.CancelExecutionException:
             raise utils.UserError("You can't take {}!".format(item.name))
 
+        if origin is not player.location:
+            try:
+                origin.run_event(["steal", "loot"], player)
+            except event.CancelExecutionException:
+                raise utils.UserError("You can't take anything from {}!".format(origin.name))
+
         try:
             item.location = player
         except equipment.EquipmentError:
