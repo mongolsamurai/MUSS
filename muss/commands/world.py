@@ -120,12 +120,12 @@ class Give(parser.Command):
                 raise utils.UserError("You can't put {} down!".format(item.name))
 
         try:
-            destination.run_event(["give", "put"], player, destination=destination)
+            destination.run_event(["accept", "receive"], player, destination=destination)
         except event.CancelExecutionException:
             if destination.type == "player":
-                raise utils.UserError("You can't give anything to {}!".format(destination.name))
+                raise utils.UserError("{} can't take anything from you!".format(destination.name))
             else:
-                raise utils.UserError("You can't put anything in {}!".format())
+                raise utils.UserError("Nothing can be put in {}!".format())
 
         item.location = destination
 
